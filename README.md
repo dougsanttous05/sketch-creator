@@ -35,3 +35,9 @@ The 16 built-in profiles were checked against manufacturer tables:
 ## Issue #1
 
 The previous README contained an unfinished TSX application, an invalid newline regex, rounded section values and a square section trace using b for both axes. The runnable source now lives in `src/`; the original is preserved in `original-README.md` for traceability. This change restores the application, corrects the dimensional model and adds validation. The issue's original intent was not described beyond a README link.
+
+## Free 3D view and dimension editing
+
+All numeric fields support a genuinely empty editing state. Erasing a measurement does not insert zero; blank dimensions invalidate the drawing until a new value is entered. Zero remains visible when explicitly entered. Decimal precision is preserved.
+
+**View 3D · 360°** opens a true-proportion model of the current UB/UC member, top/base plates and through-holes. Drag with one finger or the left mouse button for unrestricted trackball rotation, including over both poles. Pinch or scroll to zoom; two fingers or right-drag pan. Reset view re-centres and fits the model. Escape or Close returns to the form. A WebGL-capable browser is required. Welds, bolts and root radii are not modelled.
