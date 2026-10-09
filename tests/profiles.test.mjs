@@ -1,0 +1,8 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {catalogue,normalizeKey,parseCSV,sectionRects,validGrid} from '../src/profiles.mjs';
+test('normalises separators, spaces and UB/UC labels',()=>{assert.equal(normalizeKey(' UB 254 × 146 x 31 '),'254x146x31');assert.equal(normalizeKey('203x203x46 UC'),'203x203x46');});
+test('preserves decimals and distinguishes UB depth from width',()=>{const p=catalogue['254x146x31']; const r=sectionRects(p);assert.equal(r[1].x+r[1].width,251.4);assert.equal(r[0].height,146.1);assert.equal(r[2].height,6);assert.equal(catalogue['203x203x46'].b,203.6);});
+test('CSV accepts LF, CRLF and decimal comma with semicolon',()=>{for(const eol of ['\n','\r\n']) assert.equal(parseCSV('size,h,b,tf,tw'+eol+'203x203x46,203.2,203.6,11,7.2')['203x203x46'].tw,7.2);assert.equal(parseCSV('size;h;b;tf;tw\n203x203x46;203,2;203,6;11;7,2')['203x203x46'].b,203.6);});
+test('rejects legacy, blank, negative, impossible and duplicate CSV rows atomically',()=>{for(const text of ['size,b,tf,tw\n203x203x46,203.6,11,7.2','size,h,b,tf,tw\n203x203x46,,203.6,11,7.2','size,h,b,tf,tw\n203x203x46,-1,203.6,11,7.2','size,h,b,tf,tw\n203x203x46,20,203.6,11,7.2','size,h,b,tf,tw\n203x203x46,203.2,203.6,11,7.2\n203x203x46,203.2,203.6,11,7.2']) assert.throws(()=>parseCSV(text));assert.equal(catalogue['unknown'],undefined);});
+test('hole grid checks closure, edge clearance and integer counts',()=>{const c={rows:2,cols:2,spacingX:350,spacingY:350,edgeDistXLeft:50,edgeDistXRight:50,edgeDistYTop:50,edgeDistYBottom:50};assert.equal(validGrid(450,450,c,22),true);assert.equal(validGrid(450,450,{...c,spacingX:351},22),false);assert.equal(validGrid(450,450,c,102),false);assert.equal(validGrid(450,450,{...c,rows:1.5},22),false);});
