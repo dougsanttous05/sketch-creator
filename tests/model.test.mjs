@@ -1,0 +1,10 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import * as THREE from 'three';
+import { buildModel,plateGeometry,disposeModel } from '../src/model.mjs';
+import { parseNumber,displayNumber } from '../src/numeric.mjs';
+const holes={rows:2,cols:2,spacingX:350,spacingY:350,edgeDistXLeft:50,edgeDistXRight:50,edgeDistYTop:50,edgeDistYBottom:50};
+test('cleared measurements stay blank; replacement has no zero prefix',()=>{assert.ok(Number.isNaN(parseNumber('')));assert.equal(displayNumber(parseNumber('')),'');assert.equal(displayNumber(parseNumber('4000')),'4000');assert.equal(displayNumber(parseNumber('0')),'0');assert.equal(displayNumber(parseNumber('7.2')),'7.2');});
+test('NaN in another cleared field survives nested form edits',()=>{const original={beamHeight:NaN,topPlateHoles:{rows:2}};const next=structuredClone(original);next.topPlateHoles.rows=3;assert.ok(Number.isNaN(next.beamHeight));assert.equal(displayNumber(next.beamHeight),'');});
+test('3D model has correct total length and rectangular UB section',()=>{const model=buildModel({beamHeight:4000,sectionDepth:251.4,beamWidth:146.1,flangeThickness:8.6,webThickness:6,basePlateWidth:450,basePlateLength:450,basePlateThickness:25,topPlateWidth:450,topPlateLength:450,topPlateThickness:15,basePlateHoles:holes,topPlateHoles:holes,baseHolesDiameter:22,topHolesDiameter:22,paintType:'RED'});const box=new THREE.Box3().setFromObject(model),size=box.getSize(new THREE.Vector3());assert.ok(Math.abs(size.y-4.04)<1e-6);assert.ok(Math.abs(size.x-.45)<1e-6);assert.equal(model.children.length,5);const flange=model.getObjectByName('Left flange');assert.ok(Math.abs(flange.geometry.parameters.depth-.1461)<1e-9);disposeModel(model);});
+test('plate holes pass through material, not painted circles',()=>{const geometry=plateGeometry(.45,.45,.025,holes,22),mesh=new THREE.Mesh(geometry,new THREE.MeshBasicMaterial({side:THREE.DoubleSide}));mesh.updateMatrixWorld();const cast=(x,z)=>new THREE.Raycaster(new THREE.Vector3(x,1,z),new THREE.Vector3(0,-1,0)).intersectObject(mesh).length;assert.equal(cast(-.175,-.175),0);assert.ok(cast(0,0)>0);geometry.dispose();mesh.material.dispose();});

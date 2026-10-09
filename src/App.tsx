@@ -1,3 +1,7 @@
+import { NumericInput } from './NumericInput';
+import { parseNumber } from './numeric.mjs';
+import { lazy, Suspense } from 'react';
+const ModelViewer = lazy(() => import('./ModelViewer'));
 import React, { useCallback, useEffect, useMemo, useRef, useState, ChangeEvent, type JSX } from "react";
 
 /***************************\
@@ -336,7 +340,7 @@ interface HoleCfg {
   edgeDistYBottom: number; // mm da borda inferior ao último furo
 }
 
-interface StructuralParams {
+export interface StructuralParams {
   beamProfile: string;
   beamHeight: number; // altura da coluna (comprimento)
   sectionDepth: number;
@@ -369,10 +373,10 @@ const InputForm: React.FC<{ params: StructuralParams; onChange: (p: StructuralPa
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target as HTMLInputElement;
     const keys = name.split(".");
-    const newParams = JSON.parse(JSON.stringify(params)) as StructuralParams;
+    const newParams = structuredClone(params) as StructuralParams;
     let current: any = newParams;
     for (let i = 0; i < keys.length - 1; i++) current = current[keys[i]];
-    current[keys[keys.length - 1]] = type === "number" ? Number(value) : value;
+    current[keys[keys.length - 1]] = type === "number" ? parseNumber(value) : value;
 
     if (name === "beamProfile") {
       const key = normalizeBBKey(String(value));
@@ -411,7 +415,7 @@ const InputForm: React.FC<{ params: StructuralParams; onChange: (p: StructuralPa
     >
       <h2 style={{ margin: "0 0 10px" }}>Structural Parameters</h2>
       <datalist id="profiles">{Object.keys(BLUE_BOOK_DB).map(k => <option key={k} value={k} />)}</datalist>
-      <label>Section depth h (mm)<input type="number" step="any" name="sectionDepth" value={params.sectionDepth} onChange={handleChange} /></label>
+      <label>Section depth h (mm)<NumericInput type="number" step="any" name="sectionDepth" value={params.sectionDepth} onChange={handleChange} /></label>
 
       {/* Beam */}
       <div style={{ background: "#f8f9fa", padding: 12, borderRadius: 6, border: "1px solid #e9ecef" }}>
@@ -427,20 +431,20 @@ const InputForm: React.FC<{ params: StructuralParams; onChange: (p: StructuralPa
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8, marginTop: 8 }}>
           <label style={{ display: "grid", gap: 4 }}>
             <span>Member length (mm)</span>
-            <input type="number" step="any" name="beamHeight" value={params.beamHeight} onChange={handleChange} style={textInput} />
+            <NumericInput type="number" step="any" name="beamHeight" value={params.beamHeight} onChange={handleChange} style={textInput} />
           </label>
           <label style={{ display: "grid", gap: 4 }}>
             <span>Overall Width b (mm)</span>
-            <input type="number" step="any" name="beamWidth" value={params.beamWidth} onChange={handleChange} style={textInput} />
+            <NumericInput type="number" step="any" name="beamWidth" value={params.beamWidth} onChange={handleChange} style={textInput} />
           </label>
           <label style={{ display: "grid", gap: 4 }}>
             <span>Web Thickness tw (mm)</span>
-            <input type="number" step="any" name="webThickness" value={params.webThickness} onChange={handleChange} style={textInput} />
+            <NumericInput type="number" step="any" name="webThickness" value={params.webThickness} onChange={handleChange} style={textInput} />
           </label>
         </div>
         <label style={{ display: "grid", gap: 4, marginTop: 8 }}>
           <span>Flange Thickness tf (mm)</span>
-          <input type="number" step="any" name="flangeThickness" value={params.flangeThickness} onChange={handleChange} style={textInput} />
+          <NumericInput type="number" step="any" name="flangeThickness" value={params.flangeThickness} onChange={handleChange} style={textInput} />
         </label>
         {BLUE_BOOK_DB[normalizeBBKey(String(params.beamProfile))] ? (
           <small style={{ color: "#198754" }}>Auto-preenchido a partir do Blue Book (parcial).</small>
@@ -455,54 +459,54 @@ const InputForm: React.FC<{ params: StructuralParams; onChange: (p: StructuralPa
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8 }}>
           <label style={{ display: "grid", gap: 4 }}>
             <span>Width (mm)</span>
-            <input type="number" step="any" name="topPlateWidth" value={params.topPlateWidth} onChange={handleChange} style={textInput} />
+            <NumericInput type="number" step="any" name="topPlateWidth" value={params.topPlateWidth} onChange={handleChange} style={textInput} />
           </label>
           <label style={{ display: "grid", gap: 4 }}>
             <span>Length (mm)</span>
-            <input type="number" step="any" name="topPlateLength" value={params.topPlateLength} onChange={handleChange} style={textInput} />
+            <NumericInput type="number" step="any" name="topPlateLength" value={params.topPlateLength} onChange={handleChange} style={textInput} />
           </label>
           <label style={{ display: "grid", gap: 4 }}>
             <span>Thickness (mm)</span>
-            <input type="number" step="any" name="topPlateThickness" value={params.topPlateThickness} onChange={handleChange} style={textInput} />
+            <NumericInput type="number" step="any" name="topPlateThickness" value={params.topPlateThickness} onChange={handleChange} style={textInput} />
           </label>
         </div>
         <h4 style={{ margin: "8px 0 6px", fontSize: 13 }}>HOLES</h4>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8 }}>
           <label style={{ display: "grid", gap: 4 }}>
             <span>Holes Ø (mm)</span>
-            <input type="number" step="any" name="topHolesDiameter" value={params.topHolesDiameter} onChange={handleChange} style={textInput} />
+            <NumericInput type="number" step="any" name="topHolesDiameter" value={params.topHolesDiameter} onChange={handleChange} style={textInput} />
           </label>
           <label style={{ display: "grid", gap: 4 }}>
             <span>Rows</span>
-            <input type="number" step="any" name="topPlateHoles.rows" value={params.topPlateHoles.rows} onChange={handleChange} style={textInput} />
+            <NumericInput type="number" step="any" name="topPlateHoles.rows" value={params.topPlateHoles.rows} onChange={handleChange} style={textInput} />
           </label>
           <label style={{ display: "grid", gap: 4 }}>
             <span>Cols</span>
-            <input type="number" step="any" name="topPlateHoles.cols" value={params.topPlateHoles.cols} onChange={handleChange} style={textInput} />
+            <NumericInput type="number" step="any" name="topPlateHoles.cols" value={params.topPlateHoles.cols} onChange={handleChange} style={textInput} />
           </label>
           <label style={{ display: "grid", gap: 4 }}>
             <span>Spacing X (mm)</span>
-            <input type="number" step="any" name="topPlateHoles.spacingX" value={params.topPlateHoles.spacingX} onChange={handleChange} style={textInput} />
+            <NumericInput type="number" step="any" name="topPlateHoles.spacingX" value={params.topPlateHoles.spacingX} onChange={handleChange} style={textInput} />
           </label>
           <label style={{ display: "grid", gap: 4 }}>
             <span>Spacing Y (mm)</span>
-            <input type="number" step="any" name="topPlateHoles.spacingY" value={params.topPlateHoles.spacingY} onChange={handleChange} style={textInput} />
+            <NumericInput type="number" step="any" name="topPlateHoles.spacingY" value={params.topPlateHoles.spacingY} onChange={handleChange} style={textInput} />
           </label>
           <label style={{ display: "grid", gap: 4 }}>
             <span>Edge Dist. X Left (mm)</span>
-            <input type="number" step="any" name="topPlateHoles.edgeDistXLeft" value={params.topPlateHoles.edgeDistXLeft} onChange={handleChange} style={textInput} />
+            <NumericInput type="number" step="any" name="topPlateHoles.edgeDistXLeft" value={params.topPlateHoles.edgeDistXLeft} onChange={handleChange} style={textInput} />
           </label>
           <label style={{ display: "grid", gap: 4 }}>
             <span>Edge Dist. X Right (mm)</span>
-            <input type="number" step="any" name="topPlateHoles.edgeDistXRight" value={params.topPlateHoles.edgeDistXRight} onChange={handleChange} style={textInput} />
+            <NumericInput type="number" step="any" name="topPlateHoles.edgeDistXRight" value={params.topPlateHoles.edgeDistXRight} onChange={handleChange} style={textInput} />
           </label>
           <label style={{ display: "grid", gap: 4 }}>
             <span>Edge Dist. Y Top (mm)</span>
-            <input type="number" step="any" name="topPlateHoles.edgeDistYTop" value={params.topPlateHoles.edgeDistYTop} onChange={handleChange} style={textInput} />
+            <NumericInput type="number" step="any" name="topPlateHoles.edgeDistYTop" value={params.topPlateHoles.edgeDistYTop} onChange={handleChange} style={textInput} />
           </label>
           <label style={{ display: "grid", gap: 4 }}>
             <span>Edge Dist. Y Bottom (mm)</span>
-            <input type="number" step="any" name="topPlateHoles.edgeDistYBottom" value={params.topPlateHoles.edgeDistYBottom} onChange={handleChange} style={textInput} />
+            <NumericInput type="number" step="any" name="topPlateHoles.edgeDistYBottom" value={params.topPlateHoles.edgeDistYBottom} onChange={handleChange} style={textInput} />
           </label>
         </div>
       </div>
@@ -513,54 +517,54 @@ const InputForm: React.FC<{ params: StructuralParams; onChange: (p: StructuralPa
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8 }}>
           <label style={{ display: "grid", gap: 4 }}>
             <span>Width (mm)</span>
-            <input type="number" step="any" name="basePlateWidth" value={params.basePlateWidth} onChange={handleChange} style={textInput} />
+            <NumericInput type="number" step="any" name="basePlateWidth" value={params.basePlateWidth} onChange={handleChange} style={textInput} />
           </label>
           <label style={{ display: "grid", gap: 4 }}>
             <span>Length (mm)</span>
-            <input type="number" step="any" name="basePlateLength" value={params.basePlateLength} onChange={handleChange} style={textInput} />
+            <NumericInput type="number" step="any" name="basePlateLength" value={params.basePlateLength} onChange={handleChange} style={textInput} />
           </label>
           <label style={{ display: "grid", gap: 4 }}>
             <span>Thickness (mm)</span>
-            <input type="number" step="any" name="basePlateThickness" value={params.basePlateThickness} onChange={handleChange} style={textInput} />
+            <NumericInput type="number" step="any" name="basePlateThickness" value={params.basePlateThickness} onChange={handleChange} style={textInput} />
           </label>
         </div>
         <h4 style={{ margin: "8px 0 6px", fontSize: 13 }}>HOLES</h4>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8 }}>
           <label style={{ display: "grid", gap: 4 }}>
             <span>Holes Ø (mm)</span>
-            <input type="number" step="any" name="baseHolesDiameter" value={params.baseHolesDiameter} onChange={handleChange} style={textInput} />
+            <NumericInput type="number" step="any" name="baseHolesDiameter" value={params.baseHolesDiameter} onChange={handleChange} style={textInput} />
           </label>
           <label style={{ display: "grid", gap: 4 }}>
             <span>Rows</span>
-            <input type="number" step="any" name="basePlateHoles.rows" value={params.basePlateHoles.rows} onChange={handleChange} style={textInput} />
+            <NumericInput type="number" step="any" name="basePlateHoles.rows" value={params.basePlateHoles.rows} onChange={handleChange} style={textInput} />
           </label>
           <label style={{ display: "grid", gap: 4 }}>
             <span>Cols</span>
-            <input type="number" step="any" name="basePlateHoles.cols" value={params.basePlateHoles.cols} onChange={handleChange} style={textInput} />
+            <NumericInput type="number" step="any" name="basePlateHoles.cols" value={params.basePlateHoles.cols} onChange={handleChange} style={textInput} />
           </label>
           <label style={{ display: "grid", gap: 4 }}>
             <span>Spacing X (mm)</span>
-            <input type="number" step="any" name="basePlateHoles.spacingX" value={params.basePlateHoles.spacingX} onChange={handleChange} style={textInput} />
+            <NumericInput type="number" step="any" name="basePlateHoles.spacingX" value={params.basePlateHoles.spacingX} onChange={handleChange} style={textInput} />
           </label>
           <label style={{ display: "grid", gap: 4 }}>
             <span>Spacing Y (mm)</span>
-            <input type="number" step="any" name="basePlateHoles.spacingY" value={params.basePlateHoles.spacingY} onChange={handleChange} style={textInput} />
+            <NumericInput type="number" step="any" name="basePlateHoles.spacingY" value={params.basePlateHoles.spacingY} onChange={handleChange} style={textInput} />
           </label>
           <label style={{ display: "grid", gap: 4 }}>
             <span>Edge Dist. X Left (mm)</span>
-            <input type="number" step="any" name="basePlateHoles.edgeDistXLeft" value={params.basePlateHoles.edgeDistXLeft} onChange={handleChange} style={textInput} />
+            <NumericInput type="number" step="any" name="basePlateHoles.edgeDistXLeft" value={params.basePlateHoles.edgeDistXLeft} onChange={handleChange} style={textInput} />
           </label>
           <label style={{ display: "grid", gap: 4 }}>
             <span>Edge Dist. X Right (mm)</span>
-            <input type="number" step="any" name="basePlateHoles.edgeDistXRight" value={params.basePlateHoles.edgeDistXRight} onChange={handleChange} style={textInput} />
+            <NumericInput type="number" step="any" name="basePlateHoles.edgeDistXRight" value={params.basePlateHoles.edgeDistXRight} onChange={handleChange} style={textInput} />
           </label>
           <label style={{ display: "grid", gap: 4 }}>
             <span>Edge Dist. Y Top (mm)</span>
-            <input type="number" step="any" name="basePlateHoles.edgeDistYTop" value={params.basePlateHoles.edgeDistYTop} onChange={handleChange} style={textInput} />
+            <NumericInput type="number" step="any" name="basePlateHoles.edgeDistYTop" value={params.basePlateHoles.edgeDistYTop} onChange={handleChange} style={textInput} />
           </label>
           <label style={{ display: "grid", gap: 4 }}>
             <span>Edge Dist. Y Bottom (mm)</span>
-            <input type="number" step="any" name="basePlateHoles.edgeDistYBottom" value={params.basePlateHoles.edgeDistYBottom} onChange={handleChange} style={textInput} />
+            <NumericInput type="number" step="any" name="basePlateHoles.edgeDistYBottom" value={params.basePlateHoles.edgeDistYBottom} onChange={handleChange} style={textInput} />
           </label>
         </div>
       </div>
@@ -968,6 +972,7 @@ export default function App() {
   };
   const [params, setParams] = useState<StructuralParams>(initialParams);
   const [isQuickViewOpen, setQuickViewOpen] = useState(false);
+  const [is3DOpen, set3DOpen] = useState(false);
   const [revision, setRevision] = useState(0);
   const layoutOffsetX = 0;
   const known = !!BLUE_BOOK_DB[normalizeKey(params.beamProfile)];
@@ -980,7 +985,7 @@ export default function App() {
     const blob = new Blob([new XMLSerializer().serializeToString(svg)], {type:'image/svg+xml'});
     const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='steel-sketch.svg'; a.click(); setTimeout(()=>URL.revokeObjectURL(url),1000);
   };
-  return <><header className="app-header"><div><small>STRUCTURAL STEEL / WORKSHOP TOOLS</small><h1>Sketch Creator<span> / UB + UC</span></h1></div><div className="actions"><button disabled={!valid} onClick={download}>Download SVG</button><button disabled={!valid} onClick={()=>setQuickViewOpen(true)}>Quick view / PNG</button><button className="primary" disabled={!valid} onClick={()=>window.print()}>Print / Save PDF</button></div></header>
+  return <><header className="app-header"><div><small>STRUCTURAL STEEL / WORKSHOP TOOLS</small><h1>Sketch Creator<span> / UB + UC</span></h1></div><div className="actions"><button className="primary" disabled={!valid} onClick={()=>set3DOpen(true)}>View 3D · 360°</button><button disabled={!valid} onClick={download}>Download SVG</button><button disabled={!valid} onClick={()=>setQuickViewOpen(true)}>Quick view / PNG</button><button className="primary" disabled={!valid} onClick={()=>window.print()}>Print / Save PDF</button></div></header>
     <main><aside><div className="catalogue"><strong>Section catalogue</strong><p>{Object.keys(BLUE_BOOK_DB).length} profiles · dimensions in mm</p><button onClick={()=>fileInputRef.current?.click()}>Import CSV</button><input ref={fileInputRef} type="file" accept=".csv,text/csv" hidden onChange={e=>{handleLoadCSV(e.target.files?.[0]);e.target.value='';}}/><p><a href="/example-profiles.csv" download>CSV template</a> · size,h,b,tf,tw</p></div><InputForm key={revision} params={params} onChange={setParams}/></aside>
     <section className="workspace"><div className="drawing-status"><strong>A4 drawing</strong><span>{params.beamProfile} · {params.beamHeight} mm</span></div>
     {!known && <p role="alert" className="error">Profile not found. Select a listed size or import a valid CSV. Previous dimensions have been cleared.</p>}
@@ -989,5 +994,6 @@ export default function App() {
     {!platesOK && dimensionsOK && <p role="alert" className="error">The profile extends beyond a plate. Increase the plate dimensions.</p>}
     {known && dimensionsOK ? <div className="drawing"><TechnicalDrawing {...params} layoutOffsetX={layoutOffsetX}/></div> : <div className="empty">Choose a valid UB / UC profile to preview the drawing.</div>}
     <p className="caption">Schematic elevation — do not scale. Section trace omits root radii. Check dimensions before fabrication.</p></section></main>
+    {is3DOpen && valid && <Suspense fallback={<div className="model-loading" role="status">Loading 3D…</div>}><ModelViewer params={params} onClose={()=>set3DOpen(false)}/></Suspense>}
     <QuickPreviewModal isOpen={isQuickViewOpen && valid} onClose={()=>setQuickViewOpen(false)} title="A4 drawing" fileNameBase="steel-sketch"><TechnicalDrawing {...params} layoutOffsetX={layoutOffsetX}/></QuickPreviewModal></>;
 }
